@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ימי הולדת לעובדים</title>
+    <title>ימי הולדת במיטיב</title>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -122,18 +122,18 @@
             });
 
             useEffect(() => {
+                console.log('Birthday Tracker App Loaded!');
                 loadEmployees();
             }, []);
 
             const loadEmployees = async () => {
                 try {
-                    const result = await window.storage.list('employee:');
-                    if (result && result.keys) {
-                        const employeePromises = result.keys.map(key => 
-                            window.storage.get(key).then(r => r ? JSON.parse(r.value) : null)
-                        );
-                        const loadedEmployees = (await Promise.all(employeePromises)).filter(Boolean);
+                    const stored = localStorage.getItem('mitiv_employees');
+                    if (stored) {
+                        const loadedEmployees = JSON.parse(stored);
                         setEmployees(loadedEmployees);
+                    } else {
+                        setEmployees([]);
                     }
                 } catch (error) {
                     console.log('טוען רשימה ריקה');
@@ -143,19 +143,32 @@
 
             const saveEmployee = async (employee) => {
                 try {
-                    await window.storage.set(`employee:${employee.id}`, JSON.stringify(employee));
-                    await loadEmployees();
+                    const existingIndex = employees.findIndex(e => e.id === employee.id);
+                    let updatedEmployees;
+                    
+                    if (existingIndex >= 0) {
+                        updatedEmployees = [...employees];
+                        updatedEmployees[existingIndex] = employee;
+                    } else {
+                        updatedEmployees = [...employees, employee];
+                    }
+                    
+                    localStorage.setItem('mitiv_employees', JSON.stringify(updatedEmployees));
+                    setEmployees(updatedEmployees);
                 } catch (error) {
                     console.error('שגיאה בשמירה:', error);
+                    alert('שגיאה בשמירת הנתונים');
                 }
             };
 
             const deleteEmployee = async (id) => {
                 try {
-                    await window.storage.delete(`employee:${id}`);
-                    await loadEmployees();
+                    const updatedEmployees = employees.filter(emp => emp.id !== id);
+                    localStorage.setItem('mitiv_employees', JSON.stringify(updatedEmployees));
+                    setEmployees(updatedEmployees);
                 } catch (error) {
                     console.error('שגיאה במחיקה:', error);
+                    alert('שגיאה במחיקת הנתונים');
                 }
             };
 
@@ -234,8 +247,8 @@
                                         <Cake className="w-8 h-8 text-white" />
                                     </div>
                                     <div>
-                                        <h1 className="text-3xl font-bold text-gray-800">ימי הולדת לעובדים</h1>
-                                        <p className="text-gray-600 mt-1">מעקב אחר ימי הולדת בארגון</p>
+                                        <h1 className="text-3xl font-bold text-gray-800">ימי הולדת במיטיב</h1>
+                                        <p className="text-gray-600 mt-1">מזל טוב! לא שכחנו אותך :)</p>
                                     </div>
                                 </div>
                                 <button
@@ -326,7 +339,7 @@
                             <div className="bg-white rounded-2xl shadow-xl p-6 border-t-4 border-blue-500">
                                 <div className="flex items-center gap-3 mb-6">
                                     <Calendar className="w-6 h-6 text-blue-500" />
-                                    <h2 className="text-xl font-bold text-gray-800">ימי הולדת קרובים (30 יום)</h2>
+                                    <h2 className="text-xl font-bold text-gray-800">חוגגים החודש</h2>
                                 </div>
                                 <div className="space-y-3 max-h-96 overflow-y-auto">
                                     {upcomingBirthdays.length === 0 ? (
@@ -354,7 +367,7 @@
                             <div className="bg-white rounded-2xl shadow-xl p-6 border-t-4 border-green-500">
                                 <div className="flex items-center gap-3 mb-6">
                                     <Users className="w-6 h-6 text-green-500" />
-                                    <h2 className="text-xl font-bold text-gray-800">כל העובדים ({employees.length})</h2>
+                                    <h2 className="text-xl font-bold text-gray-800">כל מיטיב ({employees.length})</h2>
                                 </div>
                                 <div className="space-y-3 max-h-96 overflow-y-auto">
                                     {employees.length === 0 ? (
