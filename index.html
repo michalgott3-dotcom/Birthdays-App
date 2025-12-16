@@ -114,6 +114,44 @@
         // Storage fallback for SharePoint
         let inMemoryStorage = [];
         
+        // Pre-loaded employee data
+        const initialEmployees = [
+            { id: '1', name: 'חנאן', birthDate: '15/08', createdAt: new Date().toISOString() },
+            { id: '2', name: 'יעל', birthDate: '09/11', createdAt: new Date().toISOString() },
+            { id: '3', name: 'טלי', birthDate: '27/04', createdAt: new Date().toISOString() },
+            { id: '4', name: 'לביאה', birthDate: '01/12', createdAt: new Date().toISOString() },
+            { id: '5', name: 'סיגל', birthDate: '13/08', createdAt: new Date().toISOString() },
+            { id: '6', name: 'ברק', birthDate: '14/03', createdAt: new Date().toISOString() },
+            { id: '7', name: 'מור', birthDate: '26/10', createdAt: new Date().toISOString() },
+            { id: '8', name: 'מיכל', birthDate: '08/02', createdAt: new Date().toISOString() },
+            { id: '9', name: 'מיכל', birthDate: '18/12', createdAt: new Date().toISOString() },
+            { id: '10', name: 'ענת', birthDate: '22/08', createdAt: new Date().toISOString() },
+            { id: '11', name: 'הדר', birthDate: '04/06', createdAt: new Date().toISOString() },
+            { id: '12', name: 'קרן', birthDate: '23/10', createdAt: new Date().toISOString() },
+            { id: '13', name: 'איה', birthDate: '13/03', createdAt: new Date().toISOString() },
+            { id: '14', name: 'עדית', birthDate: '28/12', createdAt: new Date().toISOString() },
+            { id: '15', name: 'מיטל', birthDate: '05/07', createdAt: new Date().toISOString() },
+            { id: '16', name: 'עדי', birthDate: '24/02', createdAt: new Date().toISOString() },
+            { id: '17', name: 'יפעת', birthDate: '31/03', createdAt: new Date().toISOString() },
+            { id: '18', name: 'שני', birthDate: '29/04', createdAt: new Date().toISOString() },
+            { id: '19', name: 'הודא', birthDate: '23/01', createdAt: new Date().toISOString() },
+            { id: '20', name: 'נגה', birthDate: '07/03', createdAt: new Date().toISOString() },
+            { id: '21', name: 'שירי', birthDate: '18/05', createdAt: new Date().toISOString() },
+            { id: '22', name: 'אפרת', birthDate: '23/12', createdAt: new Date().toISOString() },
+            { id: '23', name: 'נורית', birthDate: '06/10', createdAt: new Date().toISOString() },
+            { id: '24', name: 'נטלי', birthDate: '14/05', createdAt: new Date().toISOString() },
+            { id: '25', name: 'אפרת', birthDate: '18/06', createdAt: new Date().toISOString() },
+            { id: '26', name: 'עדי', birthDate: '13/11', createdAt: new Date().toISOString() },
+            { id: '27', name: 'חן', birthDate: '19/05', createdAt: new Date().toISOString() },
+            { id: '28', name: 'סיון', birthDate: '19/05', createdAt: new Date().toISOString() },
+            { id: '29', name: 'עדן', birthDate: '19/11', createdAt: new Date().toISOString() },
+            { id: '30', name: 'טלי', birthDate: '11/07', createdAt: new Date().toISOString() },
+            { id: '31', name: 'ענב', birthDate: '10/01', createdAt: new Date().toISOString() },
+            { id: '32', name: 'מרים', birthDate: '17/09', createdAt: new Date().toISOString() },
+            { id: '33', name: 'עדי', birthDate: '21/12', createdAt: new Date().toISOString() },
+            { id: '34', name: 'אורית', birthDate: '20/02', createdAt: new Date().toISOString() }
+        ];
+        
         const saveToStorage = (data) => {
             try {
                 sessionStorage.setItem('mitiv_employees', JSON.stringify(data));
@@ -128,10 +166,20 @@
         const loadFromStorage = () => {
             try {
                 const stored = sessionStorage.getItem('mitiv_employees');
-                if (stored) return JSON.parse(stored);
-                return inMemoryStorage.length > 0 ? inMemoryStorage : [];
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    // If storage has data, return it
+                    if (parsed.length > 0) return parsed;
+                }
+                // Otherwise return initial data
+                if (inMemoryStorage.length > 0) return inMemoryStorage;
+                // First time - load initial employees and save them
+                saveToStorage(initialEmployees);
+                return initialEmployees;
             } catch (e) {
-                return inMemoryStorage.length > 0 ? inMemoryStorage : [];
+                if (inMemoryStorage.length > 0) return inMemoryStorage;
+                inMemoryStorage = initialEmployees;
+                return initialEmployees;
             }
         };
 
@@ -141,8 +189,7 @@
             const [editingId, setEditingId] = useState(null);
             const [formData, setFormData] = useState({
                 name: '',
-                birthDate: '',
-                department: ''
+                birthDate: ''
             });
 
             useEffect(() => {
@@ -195,8 +242,21 @@
             };
 
             const handleSubmit = () => {
-                if (!formData.name || !formData.birthDate || !formData.department) {
+                if (!formData.name || !formData.birthDate) {
                     alert('נא למלא את כל השדות');
+                    return;
+                }
+                
+                // Validate DD/MM format
+                const datePattern = /^\d{2}\/\d{2}$/;
+                if (!datePattern.test(formData.birthDate)) {
+                    alert('נא להזין תאריך בפורמט DD/MM (לדוגמה: 15/03)');
+                    return;
+                }
+                
+                const [day, month] = formData.birthDate.split('/').map(Number);
+                if (day < 1 || day > 31 || month < 1 || month > 12) {
+                    alert('נא להזין תאריך תקין');
                     return;
                 }
                 
@@ -207,7 +267,7 @@
                 };
                 
                 saveEmployee(employee);
-                setFormData({ name: '', birthDate: '', department: '' });
+                setFormData({ name: '', birthDate: '' });
                 setShowAddForm(false);
                 setEditingId(null);
             };
@@ -215,8 +275,7 @@
             const startEdit = (employee) => {
                 setFormData({
                     name: employee.name,
-                    birthDate: employee.birthDate,
-                    department: employee.department
+                    birthDate: employee.birthDate
                 });
                 setEditingId(employee.id);
                 setShowAddForm(true);
@@ -224,24 +283,21 @@
 
             const getTodayBirthdays = () => {
                 const today = new Date();
-                const todayStr = `${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+                const todayStr = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}`;
                 
                 return employees.filter(emp => {
-                    const birthDate = new Date(emp.birthDate);
-                    const empDateStr = `${String(birthDate.getMonth() + 1).padStart(2, '0')}-${String(birthDate.getDate()).padStart(2, '0')}`;
-                    return empDateStr === todayStr;
+                    return emp.birthDate === todayStr;
                 });
             };
 
             const getUpcomingBirthdays = () => {
                 const today = new Date();
-                const next30Days = new Date(today);
-                next30Days.setDate(today.getDate() + 30);
-
+                
                 return employees
                     .map(emp => {
-                        const birthDate = new Date(emp.birthDate);
-                        const thisYearBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+                        // Parse DD/MM format
+                        const [day, month] = emp.birthDate.split('/').map(Number);
+                        const thisYearBirthday = new Date(today.getFullYear(), month - 1, day);
                         
                         if (thisYearBirthday < today) {
                             thisYearBirthday.setFullYear(today.getFullYear() + 1);
@@ -277,7 +333,7 @@
                                     onClick={() => {
                                         setShowAddForm(!showAddForm);
                                         setEditingId(null);
-                                        setFormData({ name: '', birthDate: '', department: '' });
+                                        setFormData({ name: '', birthDate: '' });
                                     }}
                                     className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all flex items-center gap-2 shadow-lg"
                                 >
@@ -286,54 +342,6 @@
                                 </button>
                             </div>
                         </div>
-
-                        {/* Add/Edit Form */}
-                        {showAddForm && (
-                            <div className="bg-white rounded-2xl shadow-xl p-6 mb-6 border-r-4 border-purple-500">
-                                <h2 className="text-xl font-bold text-gray-800 mb-4">
-                                    {editingId ? 'עריכת עובד' : 'הוספת עובד חדש'}
-                                </h2>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">שם העובד</label>
-                                        <input
-                                            type="text"
-                                            value={formData.name}
-                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                            className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none"
-                                            placeholder="הזן שם מלא"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">תאריך לידה</label>
-                                        <input
-                                            type="date"
-                                            value={formData.birthDate}
-                                            onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
-                                            className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">מחלקה</label>
-                                        <input
-                                            type="text"
-                                            value={formData.department}
-                                            onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                                            className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none"
-                                            placeholder="שם המחלקה"
-                                        />
-                                    </div>
-                                    <div className="md:col-span-3">
-                                        <button
-                                            onClick={handleSubmit}
-                                            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all font-medium shadow-lg"
-                                        >
-                                            {editingId ? 'עדכן' : 'שמור'}
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
 
                         {/* Today's Birthdays Alert */}
                         {todayBirthdays.length > 0 && (
@@ -347,7 +355,6 @@
                                         <div key={emp.id} className="bg-white/90 backdrop-blur rounded-xl p-4 flex items-center justify-between">
                                             <div>
                                                 <p className="text-xl font-bold text-gray-800">{emp.name}</p>
-                                                <p className="text-gray-600">{emp.department}</p>
                                             </div>
                                             <Cake className="w-8 h-8 text-pink-500" />
                                         </div>
@@ -356,7 +363,7 @@
                             </div>
                         )}
 
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                             {/* Upcoming Birthdays */}
                             <div className="bg-white rounded-2xl shadow-xl p-6 border-t-4 border-blue-500">
                                 <div className="flex items-center gap-3 mb-6">
@@ -372,7 +379,6 @@
                                                 <div className="flex items-center justify-between">
                                                     <div>
                                                         <p className="font-bold text-gray-800">{emp.name}</p>
-                                                        <p className="text-sm text-gray-600">{emp.department}</p>
                                                     </div>
                                                     <div className="text-left">
                                                         <p className="text-2xl font-bold text-purple-600">{emp.daysUntil}</p>
@@ -401,10 +407,7 @@
                                                 <div key={emp.id} className="bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-all flex items-center justify-between">
                                                     <div className="flex-1">
                                                         <p className="font-bold text-gray-800">{emp.name}</p>
-                                                        <p className="text-sm text-gray-600">{emp.department}</p>
-                                                        <p className="text-xs text-gray-500 mt-1">
-                                                            {new Date(emp.birthDate).toLocaleDateString('he-IL', { day: 'numeric', month: 'long' })}
-                                                        </p>
+                                                        <p className="text-xs text-gray-500 mt-1">{emp.birthDate}</p>
                                                     </div>
                                                     <div className="flex gap-2">
                                                         <button
@@ -430,6 +433,46 @@
                                 </div>
                             </div>
                         </div>
+
+                        {/* Add/Edit Form */}
+                        {showAddForm && (
+                            <div className="bg-white rounded-2xl shadow-xl p-6 border-r-4 border-purple-500">
+                                <h2 className="text-xl font-bold text-gray-800 mb-4">
+                                    {editingId ? 'עריכת עובד' : 'הוספת עובד חדש'}
+                                </h2>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">שם העובד</label>
+                                        <input
+                                            type="text"
+                                            value={formData.name}
+                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                            className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none"
+                                            placeholder="הזן שם מלא"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">תאריך לידה (יום וחודש)</label>
+                                        <input
+                                            type="text"
+                                            value={formData.birthDate}
+                                            onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+                                            className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none"
+                                            placeholder="DD/MM (לדוגמה: 15/03)"
+                                            pattern="\d{2}/\d{2}"
+                                        />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <button
+                                            onClick={handleSubmit}
+                                            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all font-medium shadow-lg"
+                                        >
+                                            {editingId ? 'עדכן' : 'שמור'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             );
