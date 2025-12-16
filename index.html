@@ -111,6 +111,30 @@
             </svg>
         );
 
+        // Storage fallback for SharePoint
+        let inMemoryStorage = [];
+        
+        const saveToStorage = (data) => {
+            try {
+                sessionStorage.setItem('mitiv_employees', JSON.stringify(data));
+                return true;
+            } catch (e) {
+                console.log('Using in-memory storage');
+                inMemoryStorage = data;
+                return true;
+            }
+        };
+        
+        const loadFromStorage = () => {
+            try {
+                const stored = sessionStorage.getItem('mitiv_employees');
+                if (stored) return JSON.parse(stored);
+                return inMemoryStorage.length > 0 ? inMemoryStorage : [];
+            } catch (e) {
+                return inMemoryStorage.length > 0 ? inMemoryStorage : [];
+            }
+        };
+
         function BirthdayTracker() {
             const [employees, setEmployees] = useState([]);
             const [showAddForm, setShowAddForm] = useState(false);
@@ -126,22 +150,18 @@
                 loadEmployees();
             }, []);
 
-            const loadEmployees = async () => {
+            const loadEmployees = () => {
                 try {
-                    const stored = localStorage.getItem('mitiv_employees');
-                    if (stored) {
-                        const loadedEmployees = JSON.parse(stored);
-                        setEmployees(loadedEmployees);
-                    } else {
-                        setEmployees([]);
-                    }
+                    const loadedEmployees = loadFromStorage();
+                    setEmployees(loadedEmployees);
+                    console.log('Loaded employees:', loadedEmployees.length);
                 } catch (error) {
                     console.log('טוען רשימה ריקה');
                     setEmployees([]);
                 }
             };
 
-            const saveEmployee = async (employee) => {
+            const saveEmployee = (employee) => {
                 try {
                     const existingIndex = employees.findIndex(e => e.id === employee.id);
                     let updatedEmployees;
@@ -153,26 +173,28 @@
                         updatedEmployees = [...employees, employee];
                     }
                     
-                    localStorage.setItem('mitiv_employees', JSON.stringify(updatedEmployees));
+                    saveToStorage(updatedEmployees);
                     setEmployees(updatedEmployees);
+                    console.log('Saved employee:', employee.name);
                 } catch (error) {
                     console.error('שגיאה בשמירה:', error);
                     alert('שגיאה בשמירת הנתונים');
                 }
             };
 
-            const deleteEmployee = async (id) => {
+            const deleteEmployee = (id) => {
                 try {
                     const updatedEmployees = employees.filter(emp => emp.id !== id);
-                    localStorage.setItem('mitiv_employees', JSON.stringify(updatedEmployees));
+                    saveToStorage(updatedEmployees);
                     setEmployees(updatedEmployees);
+                    console.log('Deleted employee:', id);
                 } catch (error) {
                     console.error('שגיאה במחיקה:', error);
                     alert('שגיאה במחיקת הנתונים');
                 }
             };
 
-            const handleSubmit = async () => {
+            const handleSubmit = () => {
                 if (!formData.name || !formData.birthDate || !formData.department) {
                     alert('נא למלא את כל השדות');
                     return;
@@ -184,7 +206,7 @@
                     createdAt: editingId ? employees.find(e => e.id === editingId)?.createdAt : new Date().toISOString()
                 };
                 
-                await saveEmployee(employee);
+                saveEmployee(employee);
                 setFormData({ name: '', birthDate: '', department: '' });
                 setShowAddForm(false);
                 setEditingId(null);
